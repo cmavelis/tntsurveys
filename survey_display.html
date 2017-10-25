@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.bar {
+  fill: steelblue;
+}
+
+.axis--x path {
+  display: none;
+}
+
+</style>
+<svg width="500" height="350"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var margin = {
+    top: 20,
+    right: 120,
+    bottom: 30,
+    left: 40
+},
+
+width = 700 - margin.left - margin.right,
+    height = 350 - margin.top - margin.bottom;
+
+var images = [
+  {
+    label: "Badger",
+    image: "https://imgur.com/gaUDh5F.png",
+    color: "darkslategray"
+  },
+  {
+    label: "Boar",
+    image: "https://imgur.com/hTxNI0d.png",
+    color: "steelblue"
+  },
+  {
+    label: "Fox",
+    image: "https://imgur.com/u2N7Ow6.png",
+    color: "crimson"
+  },
+  {
+    label: "Owl",
+    image: "https://imgur.com/1zVu5hO.png",
+    color: "gold"
+  },
+  {
+    label: "Wolf",
+    image: "https://imgur.com/IgPCuzp.png",
+    color: "olivedrab"
+  }]
+
+var svg1 = d3.select("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.tsv("favorite.tsv", function(error, data) {
+  if (error) throw error;
+  // Coerce the data to numbers.
+  data.forEach(function(d) {
+    d.label = d.label;
+    d.frequency = +d.frequency;
+    d.color = d.color
+    var result = images.filter(function(a) {
+      return a.label === d.label;
+    })
+    d.image = (result[0] !== undefined) ? result[0].image : null
+    d.color = (result[0] !== undefined) ? result[0].color : null
+    console.log(d)
+    return d;})
+  	
+
+var x = d3.scaleBand().rangeRound([0, width]).padding(0.1),
+    y = d3.scaleLinear().rangeRound([height, 0]);
+
+x.domain(data.map(function(d) { return d.label; }));
+y.domain([0, d3.max(data, function(d) { return d.frequency; }) + 0.05 ]);
+
+
+      
+
+var mygroups = svg1.selectAll("g")
+  .data(data)
+  .enter().append("g");
+
+mygroups
+	.append("rect")
+	.attr("class", "bar")
+	.attr("x", function(d) { return x(d.label); })
+    .attr("y", function(d) { return y(d.frequency); })
+    .style("fill", function(d) { return d.color; })
+    .attr("width", x.bandwidth())
+  	.attr("height", function(d) { return height - y(d.frequency); });
+
+svg1
+	.append("g")
+      .attr("class", "axis axis--y")
+      .call(d3.axisLeft(y).ticks(10, "%"))
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .attr("text-anchor", "end")
+      .text("Frequency");
+
+svg1
+	.append("g")
+	  .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+mygroups
+	.append("svg:image")
+    .attr("xlink:href", function(d) { return d.image })
+    .attr("width", 50)
+    .attr("height", 50)
+    .attr("x", function(d) { return x(d.label) + 10; })
+    .attr("y", function(d) { return y(d.frequency) - 30; });
+});
+</script>
